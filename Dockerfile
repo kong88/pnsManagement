@@ -1,4 +1,4 @@
-FROM php:7.2.13-apache
+FROM php:7.2-apache
 MAINTAINER jekkos
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     libicu-dev \
