@@ -31,4 +31,6 @@ vendor/
 *.~
 *.log
 .env
-data/certbot/*
+/docker/data/database/db/*
+/docker/data/certbot/conf/*
+/docker/data/ospos/app/*
