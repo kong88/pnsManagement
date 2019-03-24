@@ -1,10 +1,10 @@
 #!/bin/bash
 
-domains=(ospos.ospos)
+domains=(${OSPOS_DOMAIN_NAME})
 rsa_key_size=4096
 data_path="./data/certbot"
-email="admin@ospos.ospos" # Adding a valid address is strongly recommended
-staging=1 # Set to 1 if you're testing your setup to avoid hitting request limits
+email="${OSPOS_CONTACT_EMAIL}"
+staging=${OSPOS_STAGING}
 
 if [ -d "$data_path" ]; then
   read -p "Existing data found for $domains. Continue and replace existing certificate? (y/N) " decision

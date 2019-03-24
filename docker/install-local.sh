@@ -1,24 +1,33 @@
 #!/bin/bash
 
+# load local environment variables
+if [ ! -e ".env" ]; then
+  echo "The .env (environment variables) file is missing"
+  exit 1
+fi
+
+. ./.env
+
+
 if [ ! -d "data/ospos/app/application" ]; then
   echo "### Create app/application folder ..."
   mkdir data/ospos/app/application
-fi
-if [ ! -d "data/ospos/app/public" ]; then
-  echo "### Create app/public folder ..."
-  mkdir data/ospos/app/public
-fi
-if [ ! -d "data/ospos/app/vendor" ]; then
-  echo "### Create app/vendor folder ..."
-  mkdir data/ospos/app/vendor
 fi
 if [ ! -e "data/ospos/app/application/index.html" ]; then
   echo "### Mount app/application folder ..."
   sudo mount --bind ../application/ data/ospos/app/application/
 fi
+if [ ! -d "data/ospos/app/public" ]; then
+  echo "### Create app/public folder ..."
+  mkdir data/ospos/app/public
+fi
 if [ ! -e "data/ospos/app/public/index.php" ]; then
   echo "### Mount app/public folder ..."
   sudo mount --bind ../public/ data/ospos/app/public/
+fi
+if [ ! -d "data/ospos/app/vendor" ]; then
+  echo "### Create app/vendor folder ..."
+  mkdir data/ospos/app/vendor
 fi
 if [ ! -e "data/ospos/app/vendor/autoload.php" ]; then
   echo "### Mount app/vendor folder ..."

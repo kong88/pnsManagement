@@ -21,53 +21,53 @@ services:
         container_name: ospos
         restart: always
         depends_on:
-           - mysql
+          - mysql
         expose:
-            - "80"
+          - "80"
         networks:
-            - app_net
-            - db_net
+          - app_net
+          - db_net
         volumes:
-            - uploads:/app/public/uploads
+          - uploads:/app/public/uploads
         environment:
-            - FORCE_HTTPS=true
-            - PHP_TIMEZONE=UTC
-            - MYSQL_USERNAME=admin
-            - MYSQL_PASSWORD=pointofsale
-            - MYSQL_DB_NAME=ospos
-            - MYSQL_HOST_NAME=mysql
+          - FORCE_HTTPS=true
+          - PHP_TIMEZONE=UTC
+          - MYSQL_USERNAME=${OSPOS_MYSQL_USERNAME}
+          - MYSQL_PASSWORD=${OSPOS_MYSQL_PASSWORD}
+          - MYSQL_DB_NAME=ospos
+          - MYSQL_HOST_NAME=mysql
 
     mysql:
         image: mariadb:10.3
         container_name: mysql
         restart: always
         expose:
-            - "3306"
+          - "3306"
         networks:
-            - db_net
+          - db_net
         volumes_from:
-            - sqlscript
+          - sqlscript
         environment:
-            - MYSQL_ROOT_PASSWORD=pointofsale
-            - MYSQL_DATABASE=ospos
-            - MYSQL_USER=admin
-            - MYSQL_PASSWORD=pointofsale
+          - MYSQL_ROOT_PASSWORD=${OSPOS_MYSQL_ROOT_PASSWORD}
+          - MYSQL_DATABASE=ospos
+          - MYSQL_USER=${OSPOS_MYSQL_USERNAME}
+          - MYSQL_PASSWORD=${OSPOS_MYSQL_PASSWORD}
 
     phpmyadmin:
         image: phpmyadmin/phpmyadmin
         container_name: phpmyadmin
         restart: always
         depends_on:
-           - mysql
+          - mysql
         expose:
-           - "80"
+          - "80"
         networks:
-            - app_net
-            - db_net
+          - app_net
+          - db_net
         environment:
-            - MYSQL_USERNAME=admin
-            - MYSQL_ROOT_PASSWORD=pointofsale
-            - PMA_HOST=mysql
+          - MYSQL_USERNAME=${OSPOS_MYSQL_USERNAME}
+          - MYSQL_ROOT_PASSWORD=${OSPOS_MYSQL_ROOT_PASSWORD}
+          - PMA_HOST=mysql
 
     nginx:
         image: nginx:1.15-alpine
@@ -78,7 +78,7 @@ services:
           - phpmyadmin
           - certbot
         volumes:
-          - ./data/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+          - ./data/nginx/nginx.tmpl:/etc/nginx/nginx.tmpl:ro
           - ./data/nginx/error_log.log:/etc/nginx/error_log.log
           - ./data/certbot/conf:/etc/letsencrypt:ro
           - ./data/certbot/www:/var/www/certbot:ro
@@ -87,8 +87,11 @@ services:
           - "443:443"
           - "8000:8000"
         networks:
-            - app_net
-        command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
+          - app_net
+        environment:
+          - WEB_DOMAIN=${OSPOS_DOMAIN_NAME}
+          - ESC=$$
+        command: "/bin/sh -c 'envsubst < /etc/nginx/nginx.tmpl > /etc/nginx/nginx.conf & while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
 
     certbot:
         image: certbot/certbot
@@ -98,5 +101,5 @@ services:
           - ./data/certbot/conf:/etc/letsencrypt
           - ./data/certbot/www:/var/www/certbot
         networks:
-            - app_net
+          - app_net
         entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"

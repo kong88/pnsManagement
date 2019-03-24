@@ -1,6 +1,6 @@
 #!/bin/bash
 
-domains=(ospos.ospos)
+domains=(${OSPOS_DOMAIN_NAME})
 rsa_key_size=4096
 data_path="./data/certbot"
 
