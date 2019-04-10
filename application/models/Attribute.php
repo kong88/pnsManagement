@@ -354,7 +354,7 @@ class Attribute extends CI_Model
 			
 			if($definition_data['definition_type'] !== GROUP && $success == TRUE)
 			{
-				$success = $this->add_import_file_column($definition_data['definition_name']);
+				$success = add_import_file_column($definition_data['definition_name'], '../import_items.csv');
 			}
 		}
 		
@@ -380,7 +380,7 @@ class Attribute extends CI_Model
 			
 			if($from_definition_name !== $definition_data['definition_name'])
 			{
-				$success = $this->rename_import_file_column($from_definition_name,$definition_data['definition_name']);
+				$success = rename_import_file_column($from_definition_name,$definition_data['definition_name'], '../import_items.csv');
 			}
 			
 			
@@ -580,9 +580,20 @@ class Attribute extends CI_Model
 			"WHERE atrl.attribute_id = atrv.attribute_id AND atrv.attribute_value = " . $this->db->escape($attribute_value) . " AND atrl.definition_id = " . $this->db->escape($definition_id));
 	}
 	
+	/**
+	 * Deletes an Attribute definition from the database and associated column in the items_import.csv
+	 *
+	 * @param	unknown	$definition_id	Attribute definition ID to remove.
+	 * @return 	boolean					TRUE if successful and FALSE if there is a failure
+	 */
 	public function delete_definition($definition_id)
 	{
-		$success = $this->delete_import_file_column($definition_id);
+		//Get the name of the column to remove
+		$this->db->select('definition_name');
+		$this->db->from('attribute_definitions');
+		$this->db->where('definition_id',$definition_id);
+		
+		$success = delete_import_file_column($this->db->get()->row()->definition_name, '../import_items.csv');
 		
 		$this->db->where('definition_id', $definition_id);
 		return $this->db->update('attribute_definitions', array('deleted' => 1));
@@ -592,126 +603,16 @@ class Attribute extends CI_Model
 	{
 		foreach($definition_ids as $definition_id)
 		{
-			$success = $this->delete_import_file_column($definition_id);
+			//Get the name of the column to remove
+			$this->db->select('definition_name');
+			$this->db->from('attribute_definitions');
+			$this->db->where('definition_id',$definition_id);
+			
+			$success = delete_import_file_column($this->db->get()->row()->definition_name, '../import_items.csv');
 		}
 		
 		$this->db->where_in('definition_id', $definition_ids);
 		
 		return $this->db->update('attribute_definitions', array('deleted' => 1));
-	}
-	
-	private function rename_import_file_column($from_column_name,$to_column_name)
-	{
-		$success			= FALSE;
-		$import_file_name	= '../import_items.csv';
-		
-		if(file_exists($import_file_name))
-		{
-			$line_array = $this->get_csv_file($import_file_name);
-			
-			if($line_array != FALSE)
-			{
-				//Find the column to rename and rename it in the array
-				$index = array_search($from_column_name,$line_array[0]);
-				array_splice($line_array[0],$index,1,$to_column_name);
-				
-				//Write out the new contents
-				$success = $this->put_csv_file($import_file_name,$line_array);
-			}
-		}
-		
-		return $success;
-	}
-	
-	private function delete_import_file_column($definition_id)
-	{
-		//Get the name of the column to remove
-		$this->db->select('definition_name');
-		$this->db->from('attribute_definitions');
-		$this->db->where('definition_id',$definition_id);
-		
-		$definition_name 	= $this->db->get()->row()->definition_name;
-		$success 			= FALSE;
-		$import_file_name 	= '../import_items.csv';
-		
-		if(file_exists($import_file_name))
-		{
-			$line_array = $this->get_csv_file($import_file_name);
-			
-			if($line_array !== FALSE)
-			{
-				//Find the column to remove and remove it from the array
-				$index = array_search($definition_name,$line_array[0]);
-				array_splice($line_array[0],$index,1);
-				
-				//Write out the new contents
-				$success = $this->put_csv_file($import_file_name,$line_array);
-			}
-		}
-		
-		return $success;
-	}
-	
-	private function add_import_file_column($column_name)
-	{
-		$success = FALSE;
-		$import_file_name	= '../import_items.csv';
-		
-		if(file_exists($import_file_name))
-		{
-			$line_array = $this->get_csv_file($import_file_name);
-			
-			if($line_array !== FALSE)
-			{
-				//Add the column to the end of the array
-				$line_array[0][] = $column_name;
-				
-				//Write out the new contents
-				$success = $this->put_csv_file($import_file_name,$line_array);
-			}
-		}
-		
-		return $success;
-	}
-	
-	private function get_csv_file($file_name)
-	{
-		ini_set("auto_detect_line_endings", true);
-		
-		if(($csv_file = fopen($file_name,'r')) !== FALSE)
-		{
-			while (($data = fgetcsv($csv_file)) !== FALSE)
-			{
-				$line_array[] = $data;
-			}
-		}
-		else
-		{
-			return FALSE;
-		}
-		
-		return $line_array;
-	}
-	
-	private function put_csv_file($file_name, $file_array)
-	{
-		ini_set("auto_detect_line_endings", true);
-		$success = FALSE;
-		
-		//Open for writing (truncates file)
-		if(($csv_file = fopen($file_name,'w')) !== FALSE)
-		{
-			foreach($file_array as $line)
-			{
-				if(fputcsv($csv_file,$line) === FALSE)
-				{
-					return FALSE;
-				}
-			}
-			
-			$success = TRUE;
-		}
-		
-		return $success;
 	}
 }
