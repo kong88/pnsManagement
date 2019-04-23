@@ -2,7 +2,7 @@
 
 /**
  * Renames a column in a given CSV import file to a new name
- * 
+ *
  * @param	string	$from_column_name	Name of the old column name.
  * @param	string	$to_column_name		Name of the new column name.
  * @param	string	$import_file_name	Name of the file to modify.
@@ -20,7 +20,7 @@ function rename_import_file_column($from_column_name, $to_column_name, $import_f
 		{
 			//Find the column to rename and rename it in the array
 			$index = array_search($from_column_name,$line_array[0]);
-			array_splice($line_array[0],$index,1,$to_column_name);
+			array_splice($line_array[0], $index, 1, $to_column_name);
 			
 			//Write out the new contents
 			$success = put_csv_file($import_file_name,$line_array);
@@ -32,7 +32,7 @@ function rename_import_file_column($from_column_name, $to_column_name, $import_f
 
 /**
  * Deletes a column from a given import file.
- * 
+ *
  * @param	string	$column_name		Name of the column to delete
  * @param	string	$import_file_name	Name of the file to modify
  * @return	boolean						TRUE on success; FALSE on failure
@@ -49,7 +49,7 @@ function delete_import_file_column($column_name, $import_file_name)
 		{
 			//Find the column to remove and remove it from the array
 			$index = array_search($column_name,$line_array[0]);
-			array_splice($line_array[0],$index,1);
+			array_splice($line_array[0], $index, 1);
 			
 			//Write out the new contents
 			$success = put_csv_file($import_file_name,$line_array);
@@ -61,12 +61,13 @@ function delete_import_file_column($column_name, $import_file_name)
 
 /**
  * Adds a column to a given import file.
- * 
+ *
  * @param 	string	$column_name		Name of the column to add
  * @param 	string	$import_file_name	Name of the file to modify
+ * @param	boolean	$append_middle		If TRUE will append $column_name before any attributes in the headers
  * @return	boolean						TRUE on success; FALSE on failure
  */
-function add_import_file_column($column_name, $import_file_name)
+function add_import_file_column($column_name, $import_file_name, $append_middle = FALSE)
 {
 	$success = FALSE;
 	
@@ -77,7 +78,43 @@ function add_import_file_column($column_name, $import_file_name)
 		if($line_array !== FALSE)
 		{
 			//Add the column to the end of the array
-			$line_array[0][] = $column_name;
+			if($append_middle === FALSE)
+			{
+				$line_array[0][] = $column_name;
+			}
+			else
+			{
+				$index = array_search('HSN',$line_array[0]);
+				array_splice($line_array[0], $index+1, 0, $column_name);
+			}
+			
+			//Write out the new contents
+			$success = put_csv_file($import_file_name,$line_array);
+		}
+	}
+	
+	return $success;
+}
+
+/**
+ * Adds multiple columns to the end of the import file
+ *
+ * @param	array[string]	$column_names		array containing the columns to add
+ * @param	string			$import_file_name	Name of the file to modify
+ * @return	boolean								TRUE on success; FALSE on failure
+ */
+function add_import_file_columns($column_names, $import_file_name)
+{
+	$success = FALSE;
+	
+	if(file_exists($import_file_name))
+	{
+		$line_array = get_csv_file($import_file_name);
+		
+		if($line_array !== FALSE)
+		{
+			//Add the columns to the end of the array
+			$line_array[0] = array_merge($line_array[0], $column_names);
 			
 			//Write out the new contents
 			$success = put_csv_file($import_file_name,$line_array);
@@ -89,7 +126,7 @@ function add_import_file_column($column_name, $import_file_name)
 
 /**
  * Read the contents of a given CSV formatted file into a two-dimensional array
- * 
+ *
  * @param	string				$file_name	Name of the file to read.
  * @return	boolean|array[][]				two-dimensional array with the file contents or FALSE on failure.
  */
@@ -114,7 +151,7 @@ function get_csv_file($file_name)
 
 /**
  * Write the contents of a given two-dimensional array to a given file in CSV format.
- * 
+ *
  * @param	string		$file_name	Name of the file to write.  If the file exists all current content will be lost.
  * @param	array[][]	$file_array	A two-dimensional array containing the contents of the file to write.
  * @return	boolean					TRUE on success; FALSE on failure.
