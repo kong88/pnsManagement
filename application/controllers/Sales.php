@@ -464,7 +464,7 @@ class Sales extends Secure_Controller
 		$quantity = parse_decimals($this->input->post('quantity'));
 		$discount = parse_decimals($this->input->post('discount'));
 		$discount_type = $this->input->post('discount_type');
-		
+
 		$item_location = $this->input->post('location');
 		$discounted_total = $this->input->post('discounted_total') != '' ? $this->input->post('discounted_total') : NULL;
 
@@ -793,7 +793,7 @@ class Sales extends Secure_Controller
 		{
 			$to = $sale_data['customer_email'];
 			$number = $sale_data[$type."_number"];
-			$subject = $this->lang->line("sales_$type") . ' ' . $number;
+			$subject = $this->lang->line("sales_" . $type) . ' ' . $number;
 
 			$text = $this->config->item('invoice_email_message');
 			$tokens = array(new Token_invoice_sequence($sale_data['invoice_number']),
@@ -805,7 +805,7 @@ class Sales extends Secure_Controller
 			$html = $this->load->view("sales/" . $type . "_email", $sale_data, TRUE);
 			// load pdf helper
 			$this->load->helper(array('dompdf', 'file'));
-			$filename = sys_get_temp_dir() . '/' . $this->lang->line("sales_$type") . '-' . str_replace('/', '-', $number) . '.pdf';
+			$filename = sys_get_temp_dir() . '/' . $this->lang->line("sales_" . $type) . '-' . str_replace('/', '-', $number) . '.pdf';
 			if(file_put_contents($filename, pdf_create($html)) !== FALSE)
 			{
 				$result = $this->email_lib->sendEmail($to, $subject, $text, $filename);
