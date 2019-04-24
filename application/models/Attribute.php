@@ -354,7 +354,7 @@ class Attribute extends CI_Model
 			
 			if($definition_data['definition_type'] !== GROUP && $success == TRUE)
 			{
-				$success = add_import_file_column($definition_data['definition_name'], '../import_items.csv');
+				$success = add_import_file_column('attribute_' . $definition_data['definition_name'], '../import_items.csv');
 			}
 		}
 		
@@ -380,7 +380,7 @@ class Attribute extends CI_Model
 			
 			if($from_definition_name !== $definition_data['definition_name'])
 			{
-				$success = rename_import_file_column($from_definition_name,$definition_data['definition_name'], '../import_items.csv');
+				$success = rename_import_file_column('attribute_' . $from_definition_name,'attribute_' . $definition_data['definition_name'], '../import_items.csv');
 			}
 			
 			
@@ -396,13 +396,16 @@ class Attribute extends CI_Model
 		return $success;
 	}
 	
-	public function get_definition_by_name($definition_name, $definition_type)
+	public function get_definition_by_name($definition_name, $definition_type = FALSE)
 	{
 		$this->db->from('attribute_definitions');
 		$this->db->where('definition_name', $definition_name);
-		$this->db->where('definition_type', $definition_type);
+		if($definition_type != FALSE)
+		{
+			$this->db->where('definition_type', $definition_type);
+		}
 		
-		return $this->db->get()->row_object();
+		return $this->db->get()->result_array();
 	}
 	
 	public function save_link($item_id, $definition_id, $attribute_id)
@@ -593,7 +596,7 @@ class Attribute extends CI_Model
 		$this->db->from('attribute_definitions');
 		$this->db->where('definition_id',$definition_id);
 		
-		$success = delete_import_file_column($this->db->get()->row()->definition_name, '../import_items.csv');
+		$success = delete_import_file_column('attribute_' . $this->db->get()->row()->definition_name, '../import_items.csv');
 		
 		$this->db->where('definition_id', $definition_id);
 		return $this->db->update('attribute_definitions', array('deleted' => 1));
@@ -608,7 +611,7 @@ class Attribute extends CI_Model
 			$this->db->from('attribute_definitions');
 			$this->db->where('definition_id',$definition_id);
 			
-			$success = delete_import_file_column($this->db->get()->row()->definition_name, '../import_items.csv');
+			$success = delete_import_file_column('attribute_' . $this->db->get()->row()->definition_name, '../import_items.csv');
 		}
 		
 		$this->db->where_in('definition_id', $definition_ids);

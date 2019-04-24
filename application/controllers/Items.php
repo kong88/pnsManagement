@@ -829,7 +829,7 @@ class Items extends Secure_Controller
 				
 				for($i = 1; $i < count($line_array); $i++)
 				{
-					$line = array_combine($keys,$this->xss_clean($line_array[i]));	//Build a XSS-cleaned associative array with the row to use to assign values
+					$line = array_combine($keys,$this->xss_clean($line_array[$i]));	//Build a XSS-cleaned associative array with the row to use to assign values
 					
 					if(!empty($line))
 					{
@@ -867,19 +867,7 @@ class Items extends Secure_Controller
 					{
 						$this->save_tax_data($line);
 						$this->save_inventory_quantities($line, $item_data);
-						
-						$definition_names = $this->Attribute->get_definition_names();
-						
-						foreach($definition_names as $definition_name)
-						{
-							if(!empty($line[$definition_name]))
-							{
-								//Create attribute value
-								$attribute_data = $this->Attribute->get_definition_by_name($definition_name)->result_array();
-								
-								$this->Attribute->save_value($line[$definition_name],$attribute_data['definition_id'],$item_data['item_id'], FALSE, $attribute_data['definition_type']);
-							}
-						}
+						$this->save_attribute_data($line);
 					}
 					
 					else //insert or update item failure
@@ -906,6 +894,27 @@ class Items extends Secure_Controller
 		}
 	}
 	/**
+	 * @param line
+	 * @param failCodes
+	 * @param attribute_data
+	 */
+	private function save_attribute_data($line)
+	{
+		$definition_names = $this->Attribute->get_definition_names();
+		
+		foreach($definition_names as $definition_name)
+		{
+			if(!empty('attribute_' . $line[$definition_name]))
+			{
+				//Create attribute value
+				$attribute_data = $this->Attribute->get_definition_by_name($definition_name);
+				//TODO: Right now definition_id is sending through as null and so is the item_id which should not be happening.
+				$this->Attribute->save_value('attribute_' . $line[$definition_name],$attribute_data['definition_id'],$item_data['item_id'], FALSE, $attribute_data['definition_type']);
+			}
+		}
+	}
+	
+	/**
 	 * Saves inventory quantities for the row in the appropriate stock locations.
 	 *
 	 * @param	array	line
@@ -917,7 +926,7 @@ class Items extends Secure_Controller
 		$employee_id		= $this->Employee->get_logged_in_employee_info()->person_id;
 		$emp_info			= $this->Employee->get_info($employee_id);
 		$comment			= 'Quantity Imported from CSV';
-		
+		//TODO: Right now location_id is coming through as NULL and we need to figure out why.
 		$allowed_locations	= $this->Stock_location->get_allowed_locations();
 		
 		foreach($allowed_locations as $location_id => $location_name)
