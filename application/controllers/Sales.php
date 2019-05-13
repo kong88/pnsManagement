@@ -582,6 +582,25 @@ class Sales extends Secure_Controller
 		}
 		$data['amount_change'] = $data['amount_due'] * -1;
 
+		// Save cash refund to the cash payment transaction if found, if not then add as new Cash transaction
+
+		$count = 0;
+		foreach($data['payments'] as $key => $payment)
+		{
+			$count++;
+			if($key == $this->lang->line('sales_cash'))
+			{
+				$data['payments'][$key]['cash_refund'] = $data['amount_change'];
+				$count = 0;
+				break;
+			}
+		}
+		if($count > 0)
+		{
+			$payment = array($this->lang->line('sales_cash') => array('payment_type' => $this->lang->line('sales_cash'), 'payment_amount' => 0, 'cash_refund' => $data['amount_change']));
+			$data['payments'] += $payment;
+		}
+
 		$data['print_price_info'] = TRUE;
 
 		$override_invoice_number = NULL;
@@ -1281,7 +1300,7 @@ class Sales extends Secure_Controller
 			// To maintain tradition we will also delete any payments with 0 amount assuming these are mistakes
 			// introduced at sale time.  This is now done in Sale.php
 
-			$payments[] = array('payment_id' => $payment_id, 'payment_type' => $payment_type, 'payment_amount' => $payment_amount, 'payment_user' => $employee_id);
+			$payments[] = array('payment_id' => $payment_id, 'payment_type' => $payment_type, 'payment_amount' => $payment_amount, 'employee_id' => $employee_id);
 		}
 
 		$payment_id = -1;
@@ -1290,7 +1309,7 @@ class Sales extends Secure_Controller
 
 		if($payment_type != PAYMENT_TYPE_UNASSIGNED && $payment_amount <> 0)
 		{
-			$payments[] = array('payment_id' => $payment_id, 'payment_type' => $payment_type, 'payment_amount' => $payment_amount, 'payment_user' => $employee_id);
+			$payments[] = array('payment_id' => $payment_id, 'payment_type' => $payment_type, 'payment_amount' => $payment_amount, 'employee_id' => $employee_id);
 		}
 
 		if($this->Sale->update($sale_id, $sale_data, $payments))
